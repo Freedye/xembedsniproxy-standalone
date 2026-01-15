@@ -1,0 +1,37 @@
+name: Build xembedsniproxy
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-arch:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    
+    steps:
+    - name: Update system and install dependencies
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm base-devel cmake extra-cmake-modules qt6-base \
+        kwindowsystem kdbusaddons kcoreaddons kcrash libxcb xcb-util-keysyms \
+        xcb-util-wm xcb-util-image libxtst git
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure and Build
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make
+
+    - name: Upload Binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: xembedsniproxy-bin
+        path: build/xembedsniproxy
