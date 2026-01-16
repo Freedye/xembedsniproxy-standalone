@@ -123,8 +123,8 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
                       XCB_COPY_FROM_PARENT, /* depth         */
                       m_containerWid, /* window Id     */
                       screen->root, /* parent window */
-                      0,
-                      0, /* x, y          */
+                      -999,
+                      -999, /* x, y          */
                       s_embedSize,
                       s_embedSize, /* width, height */
                       0, /* border_width  */
@@ -141,6 +141,8 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
 
         Set opacity to 0 just to make sure this container never appears
         And set the input region to null so everything just clicks through
+
+        This doesn't really work with hyprland since NETWinInfo::setOpacity is ignored because of XCB_CW_OVERRIDE_REDIRECT, that's why I moved it out of the screen.
     */
 
     setActiveForInput(false);
