@@ -25,7 +25,7 @@
 #include "statusnotifieritemadaptor.h"
 #include "statusnotifierwatcher_interface.h"
 
-#include "../c_ptr.h"
+#include "c_ptr.h"
 #include "debug.h"
 #include "xcbutils.h"
 #include "xtestsender.h"

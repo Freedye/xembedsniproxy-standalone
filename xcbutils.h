@@ -18,7 +18,7 @@
 #include <QGuiApplication>
 #include <QList>
 
-#include "../c_ptr.h"
+#include "c_ptr.h"
 #include <X11/Xlib.h>
 
 /** XEMBED messages */
