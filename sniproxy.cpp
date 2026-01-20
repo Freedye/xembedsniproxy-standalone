@@ -124,8 +124,8 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
                       XCB_COPY_FROM_PARENT, /* depth         */
                       m_containerWid, /* window Id     */
                       screen->root, /* parent window */
-                      -999,
-                      -999, /* x, y          */
+                      0,
+                      0, /* x, y          */
                       s_embedSize,
                       s_embedSize, /* width, height */
                       0, /* border_width  */
@@ -142,8 +142,6 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
 
         Set opacity to 0 just to make sure this container never appears
         And set the input region to null so everything just clicks through
-
-        This doesn't really work with hyprland since NETWinInfo::setOpacity is ignored because of XCB_CW_OVERRIDE_REDIRECT, that's why I moved it out of the screen.
     */
 
     setActiveForInput(false);
@@ -435,31 +433,79 @@ QPoint SNIProxy::calculateClickPoint() const
     return clickPoint;
 }
 
-void SNIProxy::setActiveForInput(bool active) const
-{
+/* 
+    On Hyprland, NETWinInfo::setOpacity() is ignored when XCB_CW_OVERRIDE_REDIRECT is used.
+  
+    Rendering the container window off-screen caused Hyprland to crash when Battle.net
+    was running in the background and the user closed a window.
+    
+    Switching from XCB_SHAPE_SK_INPUT to XCB_SHAPE_SK_BOUNDING fixed the black box
+    shown at startup, but the box reappeared when the tray icon was clicked.
+    
+    The final solution is to keep using XCB_SHAPE_SK_INPUT to receive mouse events,
+    while immediately setting XCB_SHAPE_SK_BOUNDING to an empty region to keep the
+    container window permanently invisible.
+*/
+
+void SNIProxy::setActiveForInput(bool active) const {
     auto c = m_x11Interface->connection();
+
     if (active) {
-        xcb_rectangle_t rectangle;
-        rectangle.x = 0;
-        rectangle.y = 0;
-        rectangle.width = s_embedSize;
-        rectangle.height = s_embedSize;
-        xcb_shape_rectangles(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, 0, m_containerWid, 0, 0, 1, &rectangle);
+        xcb_rectangle_t inputRect {0, 0, s_embedSize, s_embedSize};
+        xcb_shape_rectangles(
+            c,
+            XCB_SHAPE_SO_SET,
+            XCB_SHAPE_SK_INPUT,
+            0,
+            m_containerWid,
+            0, 0,
+            1,
+            &inputRect
+        );
+
+        xcb_rectangle_t boundingRect {0, 0, 0, 0};
+        xcb_shape_rectangles(
+            c,
+            XCB_SHAPE_SO_SET,
+            XCB_SHAPE_SK_BOUNDING,
+            0,
+            m_containerWid,
+            0, 0,
+            1,
+            &boundingRect
+        );
 
         const uint32_t stackData[] = {XCB_STACK_MODE_ABOVE};
         xcb_configure_window(c, m_containerWid, XCB_CONFIG_WINDOW_STACK_MODE, stackData);
     } else {
-        xcb_rectangle_t rectangle;
-        rectangle.x = 0;
-        rectangle.y = 0;
-        rectangle.width = 0;
-        rectangle.height = 0;
-        xcb_shape_rectangles(c, XCB_SHAPE_SO_SET, XCB_SHAPE_SK_INPUT, 0, m_containerWid, 0, 0, 1, &rectangle);
+        xcb_rectangle_t rect {0, 0, 0, 0};
+        xcb_shape_rectangles(
+            c,
+            XCB_SHAPE_SO_SET,
+            XCB_SHAPE_SK_INPUT,
+            0,
+            m_containerWid,
+            0, 0,
+            1,
+            &rect
+        );
+
+        xcb_shape_rectangles(
+            c,
+            XCB_SHAPE_SO_SET,
+            XCB_SHAPE_SK_BOUNDING,
+            0,
+            m_containerWid,
+            0, 0,
+            1,
+            &rect
+        );
 
         const uint32_t stackData[] = {XCB_STACK_MODE_BELOW};
         xcb_configure_window(c, m_containerWid, XCB_CONFIG_WINDOW_STACK_MODE, stackData);
     }
 }
+
 
 //____________properties__________
 
