@@ -204,9 +204,20 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
     QTimer::singleShot(500, this, &SNIProxy::update);
 }
 
+/*
+Explicitly unmap the container window and flush the X11 connection before destruction. 
+This prevents a race condition in XWayland/Hyprland where the compositor might render 
+a stale buffer (e.g., the last frame of a game) during the window's teardown animation.
+*/
 SNIProxy::~SNIProxy()
 {
-    xcb_destroy_window(m_x11Interface->connection(), m_containerWid);
+    auto c = m_x11Interface->connection();
+    setActiveForInput(false);
+    xcb_unmap_window(c, m_windowId);
+    xcb_unmap_window(c, m_containerWid);
+    xcb_flush(c);
+    xcb_destroy_window(c, m_containerWid);
+    xcb_flush(c);
     QDBusConnection::disconnectFromBus(m_dbus.name());
 }
 
