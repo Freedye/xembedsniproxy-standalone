@@ -25,6 +25,7 @@ find_package(XCB
         SHM
         UTIL
         IMAGE
+        ICCCM
 )
 
 set(XCB_LIBS
@@ -36,6 +37,7 @@ set(XCB_LIBS
     XCB::SHM
     XCB::UTIL
     XCB::IMAGE
+    XCB::ICCCM
 )
 
 set(XEMBED_SNI_PROXY_SOURCES

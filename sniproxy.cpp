@@ -13,6 +13,7 @@
 #include <span>
 #include <xcb/xcb_atom.h>
 #include <xcb/xcb_event.h>
+#include <xcb/xcb_icccm.h>
 
 #include <QScreen>
 #include <QTimer>
@@ -39,6 +40,8 @@
 
 #define SNI_WATCHER_SERVICE_NAME "org.kde.StatusNotifierWatcher"
 #define SNI_WATCHER_PATH "/StatusNotifierWatcher"
+
+#define CONTAINER_WINDOW_CLASS "xembedsniproxy\0xembedsniproxy"
 
 #ifdef Status
 typedef Status XStatus;
@@ -133,6 +136,7 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
                       screen->root_visual, /* visual        */
                       mask,
                       values); /* masks         */
+    xcb_icccm_set_wm_class(c, m_containerWid, sizeof(CONTAINER_WINDOW_CLASS), CONTAINER_WINDOW_CLASS);
 
     /*
         We need the window to exist and be mapped otherwise the child won't render it's contents
