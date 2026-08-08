@@ -650,6 +650,9 @@ void SNIProxy::sendClick(uint8_t mouseButton, int x, int y)
         // scroll event, take pointer position
         auto cookie = xcb_query_pointer(c, m_windowId);
         UniqueCPointer<xcb_query_pointer_reply_t> pointer(xcb_query_pointer_reply(c, cookie, nullptr));
+        if (!pointer) {
+            return;
+        }
         configVals[0] = pointer->root_x;
         configVals[1] = pointer->root_y;
     } else {
