@@ -164,7 +164,7 @@ public:
         xcb_create_colormap(c, XCB_COLORMAP_ALLOC_NONE, colormap, screen->root, visualId);
         auto allocColorCookie = xcb_alloc_color(c, colormap, 0, 0, 0);
         auto allocColorReply = xcb_alloc_color_reply(c, allocColorCookie, nullptr);
-        blackPixel = allocColorReply->pixel;
+        blackPixel = allocColorReply ? allocColorReply->pixel : 0;
         free(allocColorReply);
     }
 
