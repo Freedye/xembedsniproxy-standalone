@@ -201,8 +201,6 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
 
     // we query if the client selected button presses in the event mask
     // if the client does supports that we send directly, otherwise we'll use xtest
-    auto waCookie = xcb_get_window_attributes(c, wid);
-    UniqueCPointer<xcb_get_window_attributes_reply_t> windowAttributes(xcb_get_window_attributes_reply(c, waCookie, nullptr));
     if (!checkWindowOrDescendantWantButtonEvents(wid)) {
         m_injectMode = XTest;
     }
