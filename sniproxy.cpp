@@ -679,6 +679,13 @@ void SNIProxy::sendClick(uint8_t mouseButton, int x, int y)
         xcb_warp_pointer(c, XCB_NONE, m_windowId, 0, 0, 0, 0, clickPoint.x(), clickPoint.y());
     }
 
+    // make sure the container has actually been moved/raised/shaped (and the
+    // pointer warped, on Wayland) on the server before we inject the click.
+    // Without this, the requests above just sit in the output buffer and the
+    // button event can race ahead of them, landing on stale window state -
+    // which is why a click can need to be repeated before anything happens.
+    xcb_flush(c);
+
     // mouse down
     if (m_injectMode == Direct) {
         auto *event = new xcb_button_press_event_t;
@@ -724,6 +731,8 @@ void SNIProxy::sendClick(uint8_t mouseButton, int x, int y)
     } else {
         sendXTestReleased(m_x11Interface->display(), mouseButton);
     }
+
+    xcb_flush(c);
 
     if (m_injectMode == Direct) {
         setActiveForInput(false);
