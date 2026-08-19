@@ -2,6 +2,7 @@
     Registers as a embed container
     SPDX-FileCopyrightText: 2015 David Edmundson <davidedmundson@kde.org>
     SPDX-FileCopyrightText: 2019 Konrad Materka <materka@gmail.com>
+    SPDX-FileCopyrightText: 2026 Federico Bolcato <federico.bolc@gmail.com>
 
     SPDX-License-Identifier: LGPL-2.1-or-later
 */
@@ -11,14 +12,14 @@
 
 #include <QTimer>
 
-#include <KSelectionOwner>
+#include "selectionowner.h"
 
 #include <xcb/composite.h>
 #include <xcb/damage.h>
 #include <xcb/xcb_atom.h>
 #include <xcb/xcb_event.h>
 
-#include "../c_ptr.h"
+#include "c_ptr.h"
 #include "sniproxy.h"
 #include "xcbutils.h"
 
@@ -29,7 +30,7 @@
 FdoSelectionManager::FdoSelectionManager()
     : QObject()
     , m_x11Interface(qGuiApp->nativeInterface<QNativeInterface::QX11Application>())
-    , m_selectionOwner(new KSelectionOwner(Xcb::atoms->selectionAtom, -1, this))
+    , m_selectionOwner(new X11SelectionOwner(Xcb::atoms->selectionAtom, this))
 {
     qCDebug(SNIPROXY) << "starting";
 
@@ -60,9 +61,9 @@ void FdoSelectionManager::init()
 
     qApp->installNativeEventFilter(this);
 
-    connect(m_selectionOwner, &KSelectionOwner::claimedOwnership, this, &FdoSelectionManager::onClaimedOwnership);
-    connect(m_selectionOwner, &KSelectionOwner::failedToClaimOwnership, this, &FdoSelectionManager::onFailedToClaimOwnership);
-    connect(m_selectionOwner, &KSelectionOwner::lostOwnership, this, &FdoSelectionManager::onLostOwnership);
+    connect(m_selectionOwner, &X11SelectionOwner::claimedOwnership, this, &FdoSelectionManager::onClaimedOwnership);
+    connect(m_selectionOwner, &X11SelectionOwner::failedToClaimOwnership, this, &FdoSelectionManager::onFailedToClaimOwnership);
+    connect(m_selectionOwner, &X11SelectionOwner::lostOwnership, this, &FdoSelectionManager::onLostOwnership);
     m_selectionOwner->claim(false);
 }
 

@@ -1,6 +1,7 @@
 /*
     Main
     SPDX-FileCopyrightText: 2015 David Edmundson <davidedmundson@kde.org>
+    SPDX-FileCopyrightText: 2026 Federico Bolcato <federico.bolc@gmail.com>
 
     SPDX-License-Identifier: LGPL-2.1-or-later
 */
@@ -24,12 +25,8 @@ inline constexpr XID None = XNone;
 #undef None
 #endif
 
+#include <QDBusConnection>
 #include <QDBusMetaType>
-
-#include <KAboutData>
-#include <KCrash>
-#include <KDBusService>
-#include <KWindowSystem>
 
 namespace Xcb
 {
@@ -48,16 +45,21 @@ int main(int argc, char **argv)
 
     QGuiApplication app(argc, argv);
 
-    if (!KWindowSystem::isPlatformX11()) {
+    if (QGuiApplication::platformName() != QLatin1String("xcb")) {
         qFatal("xembed-sni-proxy is only useful XCB. Aborting");
     }
 
-    KAboutData about(QStringLiteral("xembedsniproxy"), QString(), QStringLiteral("1.0"));
-    KAboutData::setApplicationData(about);
-
-    KCrash::initialize();
+    QCoreApplication::setApplicationName(QStringLiteral("xembedsniproxy"));
+    QCoreApplication::setApplicationVersion(QStringLiteral("1.0"));
 
     app.setQuitOnLastWindowClosed(false);
+
+    // make sure only one instance runs at a time; a plain well-known service
+    // name claim is all KDBusService::Unique was really buying us here
+    if (!QDBusConnection::sessionBus().registerService(QStringLiteral("org.xembedsniproxy.XEmbedSniProxy"))) {
+        qCDebug(SNIPROXY) << "another instance is already running, exiting";
+        return 0;
+    }
 
     qDBusRegisterMetaType<KDbusImageStruct>();
     qDBusRegisterMetaType<KDbusImageVector>();
@@ -66,7 +68,6 @@ int main(int argc, char **argv)
     Xcb::atoms = new Xcb::Atoms();
     Xcb::trayVisual = new Xcb::TrayVisual();
 
-    KDBusService service(KDBusService::Unique);
     FdoSelectionManager manager;
 
     auto rc = app.exec();

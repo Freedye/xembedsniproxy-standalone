@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <span>
+#include <xcb/shape.h>
 #include <xcb/xcb_atom.h>
 #include <xcb/xcb_event.h>
 #include <xcb/xcb_icccm.h>
@@ -20,10 +21,6 @@
 #include <QTimer>
 
 #include <QBitmap>
-
-#include <KWindowInfo>
-#include <KWindowSystem>
-#include <netwm.h>
 
 #include "statusnotifieritemadaptor.h"
 #include "statusnotifierwatcher_interface.h"
@@ -157,8 +154,9 @@ SNIProxy::SNIProxy(xcb_window_t wid, QObject *parent)
 
 #ifndef VISUAL_DEBUG
 
-    NETWinInfo wm(c, m_containerWid, screen->root, NET::Properties(), NET::Properties2());
-    wm.setOpacity(0);
+    // fully transparent, so the container window never visibly flashes on screen
+    const uint32_t opacity = 0;
+    xcb_change_property(c, XCB_PROP_MODE_REPLACE, m_containerWid, Xcb::atoms->opacityAtom, XCB_ATOM_CARDINAL, 32, 1, &opacity);
 #endif
 
     xcb_flush(c);
@@ -580,8 +578,24 @@ QString SNIProxy::Status() const
 
 QString SNIProxy::Title() const
 {
-    KWindowInfo window(m_windowId, NET::WMName);
-    return window.name();
+    auto c = m_x11Interface->connection();
+
+    // prefer _NET_WM_NAME (UTF8_STRING), falling back to the older ICCCM WM_NAME
+    const auto netNameCookie = xcb_get_property(c, false, m_windowId, Xcb::atoms->wmNameAtom, Xcb::atoms->utf8StringAtom, 0, 1024);
+    UniqueCPointer<xcb_get_property_reply_t> netNameReply(xcb_get_property_reply(c, netNameCookie, nullptr));
+    if (netNameReply && netNameReply->type == static_cast<xcb_atom_t>(Xcb::atoms->utf8StringAtom) && xcb_get_property_value_length(netNameReply.get()) > 0) {
+        return QString::fromUtf8(static_cast<const char *>(xcb_get_property_value(netNameReply.get())), xcb_get_property_value_length(netNameReply.get()));
+    }
+
+    const auto wmNameCookie = xcb_icccm_get_wm_name(c, m_windowId);
+    xcb_icccm_get_text_property_reply_t wmNameReply;
+    if (xcb_icccm_get_wm_name_reply(c, wmNameCookie, &wmNameReply, nullptr)) {
+        QString name = QString::fromUtf8(wmNameReply.name, wmNameReply.name_len);
+        xcb_icccm_get_text_property_reply_wipe(&wmNameReply);
+        return name;
+    }
+
+    return {};
 }
 
 int SNIProxy::WindowId() const

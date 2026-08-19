@@ -1,6 +1,7 @@
 /*
     Registers as a embed container
     SPDX-FileCopyrightText: 2015 David Edmundson <davidedmundson@kde.org>
+    SPDX-FileCopyrightText: 2026 Federico Bolcato <federico.bolc@gmail.com>
 
     SPDX-License-Identifier: LGPL-2.1-or-later
 */
@@ -14,7 +15,7 @@
 
 #include <xcb/xcb.h>
 
-class KSelectionOwner;
+class X11SelectionOwner;
 class SNIProxy;
 
 class FdoSelectionManager : public QObject, public QAbstractNativeEventFilter
@@ -46,5 +47,5 @@ private:
 
     QHash<xcb_window_t, u_int32_t> m_damageWatches;
     QHash<xcb_window_t, SNIProxy *> m_proxies;
-    KSelectionOwner *m_selectionOwner;
+    X11SelectionOwner *m_selectionOwner;
 };

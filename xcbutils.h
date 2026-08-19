@@ -108,6 +108,10 @@ public:
         , opcodeAtom("_NET_SYSTEM_TRAY_OPCODE")
         , messageData("_NET_SYSTEM_TRAY_MESSAGE_DATA")
         , visualAtom("_NET_SYSTEM_TRAY_VISUAL")
+        , managerAtom("MANAGER")
+        , wmNameAtom("_NET_WM_NAME")
+        , utf8StringAtom("UTF8_STRING")
+        , opacityAtom("_NET_WM_WINDOW_OPACITY")
     {
     }
 
@@ -116,6 +120,10 @@ public:
     Atom opcodeAtom;
     Atom messageData;
     Atom visualAtom;
+    Atom managerAtom;
+    Atom wmNameAtom;
+    Atom utf8StringAtom;
+    Atom opacityAtom;
 };
 
 extern Atoms *atoms;
