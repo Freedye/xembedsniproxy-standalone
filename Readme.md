@@ -1,21 +1,40 @@
-# xembed-sni-proxy-standalone
-Didn't want to install all the plasma-workspace stuff for this module alone and basically just for a Battle.net icon, so here we are
+# xembed-sni-proxy standalone
 
-# Why this exists:
-Basically, when you run Battle.net (and other programs) through wine, the system tray icons float around your screen because it uses a X11 protocol called XEmbed.
-Waybar (and i think also swaybar and quickshell) do not support XEmbed, they use a DBus-based protocol called StatusNotifierItem (SNI).
+![license](https://img.shields.io/badge/license-GPL--2.0-blue)
+![platform](https://img.shields.io/badge/platform-Linux%20%2F%20X11-informational)
+![KDE Frameworks](https://img.shields.io/badge/KDE%20Frameworks-not%20required-success)
 
-To fix that, you need to install xembed-sni-proxy, which is included in plasma-workspace.
+Didn't want to install all the plasma-workspace stuff for this module alone and basically just for a Battle.net icon, so here we are.
 
-The problem is pacman -S plasma-workspace is ~200mb, pacman -Sdd plasma-workspace sometimes install unwanted dependecies after a pacman -Syu and also adds unwanted session options to SDDM, with this method should be around 5mb without all the bloat.
+## Why this exists
 
-## Dependencies:
-- `base-devel`, `cmake`, `extra-cmake-modules`
-- `qt6-base`
-- `kwindowsystem`, `kdbusaddons`, `kcoreaddons`, `kcrash`
-- `libxcb`, `xcb-util-keysyms`, `xcb-util-wm`, `xcb-util-image`, `libxtst`
+When you run Battle.net (and other programs) through Wine, the system tray icon floats around your screen because it uses an X11 protocol called **XEmbed**.
 
-## How to compile:
+Waybar (and I think also swaybar and quickshell) don't support XEmbed, they use a D-Bus based protocol called **StatusNotifierItem** (SNI).
+
+To fix that you need `xembed-sni-proxy`, which normally ships inside `plasma-workspace`. Problem is:
+
+| | `plasma-workspace` | this repo |
+|---|---|---|
+| install size | ~200 MB | ~5 MB |
+| KDE Frameworks (KF6) required | yes | **no** |
+| extra-cmake-modules required | yes | **no** |
+| side effects | can pull in unwanted deps on `pacman -Syu`, adds unwanted session options to SDDM | none |
+
+This fork only needs **Qt6, XCB and X11**: no KDE Frameworks library, no extra-cmake-modules, at build time or runtime.
+
+## Dependencies
+
+| Package | Needed for |
+|---|---|
+| `base-devel`, `cmake` | building |
+| `qt6-base` | Qt6 Core/Gui/DBus |
+| `libxcb` | XCB core + X11 extensions (damage, composite, randr, shm, shape, xfixes) |
+| `xcb-util`, `xcb-util-wm`, `xcb-util-image` | XCB helper libs (ICCCM, image handling) |
+| `libxtst` | synthetic click injection (XTest) |
+
+## How to compile
+
 ```bash
 mkdir build && cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local
@@ -23,9 +42,20 @@ make
 sudo make install
 ```
 
-## Usage:
-Add this to your `hyprland.conf`:
-`exec-once = xembedsniproxy`
+## Usage
 
-or if you just downloaded the binary:
-`exec-once = path/to/xembedsniproxy`
+Add this to your `hyprland.conf`:
+
+```
+exec-once = xembedsniproxy
+```
+
+or, if you just downloaded the binary:
+
+```
+exec-once = path/to/xembedsniproxy
+```
+
+## License
+
+GPL-2.0, see [LICENSE](LICENSE).
